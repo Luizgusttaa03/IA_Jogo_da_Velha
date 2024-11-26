@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo da Velha</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Jogo da Velha</h1>
+        <div class="placar">
+            <p>Jogador: {{ placar['jogador'] }} | IA: {{ placar['ia'] }} | Empates: {{ placar['empates'] }}</p>
+        </div>
+        <div id="tabuleiro" class="tabuleiro">
+           
+        </div>
+        <div id="resultado" class="resultado">
+            
+        </div>
+        <button onclick="resetarJogo()">Reiniciar Jogo</button>
+    </div>
+
+    <script>
+        let tabuleiro = Array(9).fill('');
+        let jogador = 'X';
+
+        function renderizarTabuleiro() {
+            const tabuleiroDiv = document.getElementById('tabuleiro');
+            tabuleiroDiv.innerHTML = '';
+            tabuleiro.forEach((celula, index) => {
+                const celulaDiv = document.createElement('div');
+                celulaDiv.classList.add('celula');
+                celulaDiv.textContent = celula;
+                celulaDiv.onclick = () => fazerJogada(index);
+                tabuleiroDiv.appendChild(celulaDiv);
+            });
+        }
+
+        function mostrarResultado(mensagem) {
+            const resultadoDiv = document.getElementById('resultado');
+            resultadoDiv.textContent = mensagem;
+        }
+
+        function fazerJogada(index) {
+            if (tabuleiro[index] === '') {
+                tabuleiro[index] = jogador;
+                enviarJogada(index);
+            }
+        }
+
+        function enviarJogada(index) {
+            fetch('/jogar', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    tabuleiro: tabuleiro,
+                    posicao: index,
+                    jogador: jogador
+                })
+            }).then(response => response.json())
+              .then(data => {
+                  tabuleiro = data.tabuleiro;
+                  renderizarTabuleiro();
+                  if (data.vencedor) {
+                      if (data.vencedor === 'empate') {
+                          mostrarResultado('Empate!');
+                      } else {
+                          mostrarResultado(`${data.vencedor} venceu!`);
+                      }
+                  }
+              });
+        }
+
+        function resetarJogo() {
+            tabuleiro = Array(9).fill('');
+            mostrarResultado('');
+            renderizarTabuleiro();
+        }
+
+        renderizarTabuleiro();
+    </script>
+</body>
+</html>
